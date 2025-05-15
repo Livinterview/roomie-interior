@@ -1,0 +1,44 @@
+# ────────── FastAPI 서버 & 스트리밍 ──────────
+fastapi
+uvicorn
+authlib
+python-dotenv
+starlette
+httpx
+itsdangerous
+redis
+pymysql
+python-multipart
+schedule
+aiohttp
+aiofiles
+pydantic
+pydantic-core
+pydantic-settings
+
+# ────────── 모델 추론 / 비전 파이프라인 ──────────
+torch==2.3.0+cu118
+torchvision==0.18.0+cu118
+--index-url https://download.pytorch.org/whl/cu118
+timm==1.0.15
+numpy==1.26.4
+opencv-python==4.11.0.86
+pillow==11.2.1
+pycocotools==2.0.8
+diffusers==0.33.1
+transformers==4.51.3
+huggingface-hub==0.30.2
+safetensors==0.5.3
+fairscale==0.4.13
+
+# ────────── 데이터 · 보조 유틸 ──────────
+requests==2.32.3
+SQLAlchemy==2.0.40
+orjson==3.10.16
+typing_extensions==4.13.2
+filelock==3.18.0
+packaging==24.2
+tqdm==4.67.1
+scipy==1.15.2
+scikit-learn==1.6.1
+matplotlib==3.10.1
