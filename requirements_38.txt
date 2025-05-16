@@ -8,23 +8,26 @@ pillow
 torch==1.12.1+cu113
 torchvision==0.13.1+cu113
 --extra-index-url https://download.pytorch.org/whl/cu113
-pytorch-lightning==1.4.2
-omegaconf==2.1.1
-einops==0.3.0
-kornia==0.6
-transformers==4.22.2
-fire==0.4.0
-
-# === Image Processing ===
-albumentations==0.4.3
-opencv-python==4.6.0.66
-imageio==2.9.0
-imageio-ffmpeg==0.4.2
-
-# === Optional (for future use) ===
-torchmetrics==0.6.0
-webdataset==0.2.5
-
-# === Git-based Dependencies ===
+pytorch-lightning==1.9.4
+omegaconf==2.3.0
+einops==0.8.1
+tqdm==4.64.1
+pytorch-lightning==1.9.4
 git+https://github.com/CompVis/taming-transformers.git@master
 git+https://github.com/openai/CLIP.git
+kornia==0.6.8
+invisible-watermark
+transformers==4.31.0
+
+# === CarveKit (for background removal in util.py) ===
+opencv-python-headless==4.5.5.64
+numpy==1.22.4
+pillow==9.0.1
+
+# === Additional utilities
+matplotlib==3.5.3
+scikit-image==0.19.3
+imageio==2.22.4
+
+# 아래 거 마지막에 따로 실행행
+# pip install carvekit==4.1.0 --no-deps

@@ -1,67 +1,41 @@
-import os
-import json
-import base64
-import time
-import requests
+import subprocess, os
 from pathlib import Path
-from dotenv import load_dotenv
+from huggingface_hub import hf_hub_download
 
-load_dotenv()
+# 0) venv38 Python 경로 확인 ────────────────────────────
+python_path = "/workspace/venv38/bin/python"
+if not os.path.exists(python_path):
+    raise RuntimeError("venv38 Python not found.")
 
-API_KEY = os.getenv("RUNPOD_API_KEY")
-ENDPOINT_ID = os.getenv("RUNPOD_ENDPOINT_ID")
-API_URL = f"https://api.runpod.ai/v2/{ENDPOINT_ID}/run"
-
+# ──────────────────────────────────────────────────────
 def rotate_with_zero123(image_path: str, yaw: float, pitch: float, object_id: str) -> str:
-    # 이미지 base64 인코딩
-    with open(image_path, "rb") as f:
-        encoded_image = base64.b64encode(f.read()).decode("utf-8")
 
-    payload = {
-        "input": {
-            "image_base64": encoded_image,
-            "yaw": float(yaw),
-            "pitch": float(pitch),
-            "size": 256,
-            "object_id": object_id
-        }
-    }
+    # 1) 체크포인트는 캐시에 한 번만 내려받음
+    ckpt_path = hf_hub_download(
+        repo_id="cvlab/zero123-weights",
+        filename="105000.ckpt"
+    )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_KEY}"
-    }
+    # 2) 경로·이름 세팅
+    config_path  = "/workspace/roomie-interior/external/zero123/zero123/configs/sd-objaverse-finetune-c_concat-256.yaml"
+    script_path  = "/workspace/roomie-interior/infer_zero123.py"
+    out_dir      = Path("assets")                       # 수정 (폴더 통일)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path     = out_dir / f"{object_id}_rot.png"
 
-    res = requests.post(API_URL, headers=headers, json=payload)
-    print("[DEBUG] RunPod Response:", res.status_code, res.text)
-    res.raise_for_status()
+    # 3) 서브프로세스 커맨드
+    command = [
+        python_path,  script_path,
+        "--input",  image_path,                  # 수정 (변수명 일치)
+        "--yaw",    str(yaw),
+        "--pitch",  str(pitch),
+        "--output", str(out_path),               # 수정 (전체 경로 전달)
+        "--checkpoint", ckpt_path,
+        "--config",    config_path,
+    ]
 
-    job_id = res.json()["id"]
+    print("[DEBUG] Zero-123 cmd:", " ".join(map(str, command)))
+    subprocess.run(command, check=True)
 
-    # 결과 대기
-    status_url = f"https://api.runpod.ai/v2/{ENDPOINT_ID}/status/{job_id}"
-    print(f"[INFO] RunPod 작업 시작 - Job ID: {job_id}")
-    print(f"[INFO] 결과를 기다리는 중입니다...")
-
-    while True:
-        result = requests.get(status_url, headers=headers).json()
-        status = result["status"]
-        print(f"[DEBUG] 현재 상태: {status}")
-
-        if status == "COMPLETED":
-            print("[INFO] RunPod 작업 완료 ✅")
-            break
-        elif status == "FAILED":
-            raise RuntimeError("❌ RunPod 작업 실패")
-        
-        time.sleep(2)  # 2초마다 체크
-
-
-    # 결과 이미지 다운로드
-    output_url = result["output"]["url"]
-    output_path = Path(f"interior/assets/{object_id}_rotated.png")
-    img = requests.get(output_url)
-    with open(output_path, "wb") as f:
-        f.write(img.content)
-
-    return str(output_path)
+    print("[INFO] 회전 PNG 저장:", out_path)
+    return str(out_path)

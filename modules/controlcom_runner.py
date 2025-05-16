@@ -1,29 +1,35 @@
-# interior/controlcom_runner.py
+# modules/controlcom_runner.py
+
+import json
+import subprocess
+import tempfile
+from pathlib import Path
+
+SCRIPT_PATH = Path(__file__).resolve().parent.parent / "scripts" / "wrapper_controlcom.py"
 
 def run_controlcom(description: str) -> list[dict]:
     """
-    자연어 설명을 파싱해 object별 프롬프트, 위치, 시점 정보 추출
-    (임시 dummy 버전: rule 기반 매핑)
+    ControlCom으로 자연어 설명을 파싱해
+    [
+      {prompt:str, bbox:[x,y,w,h], yaw:float, pitch:float},
+      ...
+    ] 형태 리스트 반환
     """
-    mapping = {
-        "소파": {
-            "prompt": "a mint green sofa, gray background, studio lighting",
-            "bbox": [200, 500, 220, 110],
-            "yaw": -60,
-            "pitch": 10
-        },
-        "테이블": {
-            "prompt": "a small wooden coffee table, gray background, studio lighting",
-            "bbox": [300, 650, 160, 90],
-            "yaw": 0,
-            "pitch": 15
-        }
-    }
 
-    parsed_objects = []
-    if "소파" in description:
-        parsed_objects.append(mapping["소파"])
-    if "테이블" in description:
-        parsed_objects.append(mapping["테이블"])
+    # 1. 임시 JSON 파일 생성
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tf:
+        result_path = Path(tf.name)
 
-    return parsed_objects
+    # 2. subprocess 실행
+    cmd = [
+        "python", str(SCRIPT_PATH),
+        "--text", description,
+        "--out", str(result_path),
+    ]
+    print(f"[DEBUG] ControlCom 실행: {' '.join(cmd)}")
+    subprocess.run(cmd, check=True)
+
+    # 3. JSON 결과 파싱
+    data = json.loads(result_path.read_text(encoding="utf-8"))
+    print("[DEBUG] ControlCom 결과:", data)
+    return data
